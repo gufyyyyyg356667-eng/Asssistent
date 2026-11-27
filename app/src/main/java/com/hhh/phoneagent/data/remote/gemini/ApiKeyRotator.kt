@@ -44,7 +44,7 @@ class ApiKeyRotator @Inject constructor(
 
     fun reportRateLimited(lease: ApiKeyLease, retryAfterMillis: Long?) {
         synchronized(lock) {
-            val wait = maxOf(retryAfterMillis ?: 0L, DEFAULT_COOLDOWN_MILLIS)
+            val wait = retryAfterMillis?.coerceAtLeast(1_000L) ?: DEFAULT_COOLDOWN_MILLIS
             cooldownUntil[lease.value] = clock.nowMillis() + wait
         }
     }
