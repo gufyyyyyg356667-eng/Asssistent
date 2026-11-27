@@ -34,7 +34,9 @@ object LiveProtocol {
     fun setup(model: String, systemPrompt: String, tools: List<ToolSchema>): JsonObject = buildJsonObject {
         putJsonObject("setup") {
             put("model", "models/$model")
-            putJsonArray("responseModalities") { add(JsonPrimitive("AUDIO")) }
+            putJsonObject("generationConfig") {
+                putJsonArray("responseModalities") { add(JsonPrimitive("AUDIO")) }
+            }
             putJsonObject("systemInstruction") {
                 putJsonArray("parts") { add(buildJsonObject { put("text", systemPrompt) }) }
             }

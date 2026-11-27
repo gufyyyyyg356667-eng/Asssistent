@@ -22,7 +22,9 @@ class LiveProtocolTest {
     fun setupUsesModelResourceNameAndAudioOnly() {
         val setup = LiveProtocol.setup("gemini-3.8-live", "hello", emptyList())["setup"]!!.jsonObject
         assertEquals("models/gemini-3.8-live", setup["model"]!!.jsonPrimitive.content)
-        assertEquals("AUDIO", setup["responseModalities"]!!.jsonArray[0].jsonPrimitive.content)
+        val modalities = setup["generationConfig"]!!.jsonObject["responseModalities"]!!.jsonArray
+        assertEquals("AUDIO", modalities[0].jsonPrimitive.content)
+        assertFalse(setup.containsKey("responseModalities"))
         assertFalse(setup.containsKey("tools"))
     }
 
