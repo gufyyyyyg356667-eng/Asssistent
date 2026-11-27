@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hhh.phoneagent.domain.model.VoiceState
+import com.hhh.phoneagent.presentation.settings.SettingsScreen
 import com.hhh.phoneagent.presentation.voice.VoiceViewModel
 import com.hhh.phoneagent.service.accessibility.AccessibilityBridge
 import com.hhh.phoneagent.service.overlay.OverlayController
@@ -50,12 +51,18 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                MainScreen(
-                    bridge = bridge,
-                    onOpenAccessibility = {
-                        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                    },
-                )
+                var showSettings by remember { mutableStateOf(false) }
+                if (showSettings) {
+                    SettingsScreen(onBack = { showSettings = false })
+                } else {
+                    MainScreen(
+                        bridge = bridge,
+                        onOpenAccessibility = {
+                            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                        },
+                        onOpenGeminiKeys = { showSettings = true },
+                    )
+                }
             }
         }
     }
@@ -65,6 +72,7 @@ class MainActivity : ComponentActivity() {
 private fun MainScreen(
     bridge: AccessibilityBridge,
     onOpenAccessibility: () -> Unit,
+    onOpenGeminiKeys: () -> Unit,
     viewModel: VoiceViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -136,6 +144,8 @@ private fun MainScreen(
         }
         Spacer(Modifier.height(16.dp))
 
+        Button(onClick = onOpenGeminiKeys) { Text("Gemini keys") }
+        Spacer(Modifier.height(16.dp))
         Button(onClick = viewModel::talkNow, enabled = micGranted) { Text("Talk") }
         Spacer(Modifier.height(16.dp))
         Text("Status: ${describe(voiceState)}")
