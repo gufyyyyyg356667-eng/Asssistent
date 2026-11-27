@@ -27,7 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.abs
@@ -71,7 +70,7 @@ class OverlayService : Service() {
                     coordinator.state.collect { state -> bubble.applyState(state) }
                 },
                 scope.launch {
-                    approvals.currentRequest.distinctUntilChanged().collect { request ->
+                    approvals.currentRequest.collect { request ->
                         if (request == null) {
                             removeApproval()
                         } else {
