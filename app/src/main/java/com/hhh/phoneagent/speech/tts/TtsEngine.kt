@@ -9,6 +9,7 @@ import com.hhh.phoneagent.core.common.AppResult
 import com.hhh.phoneagent.core.common.failure
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CompletableDeferred
+import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.suspendCancellableCoroutine
