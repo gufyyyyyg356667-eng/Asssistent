@@ -9,6 +9,8 @@ import com.hhh.phoneagent.tools.ui.ScrollTool
 import com.hhh.phoneagent.tools.ui.SwipeTool
 import com.hhh.phoneagent.tools.ui.TapTool
 import com.hhh.phoneagent.tools.ui.TypeTextTool
+import com.hhh.phoneagent.tools.workflow.ListWorkflowsTool
+import com.hhh.phoneagent.tools.workflow.RunWorkflowTool
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -28,4 +30,6 @@ abstract class ToolRegistryModule {
     @Binds @IntoSet abstract fun tap(tool: TapTool): AgentTool
     @Binds @IntoSet abstract fun swipe(tool: SwipeTool): AgentTool
     @Binds @IntoSet abstract fun globalAction(tool: GlobalActionTool): AgentTool
+    @Binds @IntoSet abstract fun runWorkflow(tool: RunWorkflowTool): AgentTool
+    @Binds @IntoSet abstract fun listWorkflows(tool: ListWorkflowsTool): AgentTool
 }

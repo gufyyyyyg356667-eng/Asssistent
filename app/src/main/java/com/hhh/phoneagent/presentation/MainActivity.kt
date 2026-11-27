@@ -37,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.hhh.phoneagent.domain.model.VoiceState
 import com.hhh.phoneagent.presentation.voice.VoiceViewModel
 import com.hhh.phoneagent.service.accessibility.AccessibilityBridge
+import com.hhh.phoneagent.service.overlay.OverlayController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -104,6 +105,31 @@ private fun MainScreen(
                         )
                     } else {
                         viewModel.setWakeWordEnabled(enable)
+                    }
+                },
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+
+        var bubbleOn by remember { mutableStateOf(false) }
+        val overlayLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
+            bubbleOn = OverlayController.start(context)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Floating bubble")
+            Spacer(Modifier.height(0.dp))
+            Switch(
+                checked = bubbleOn,
+                onCheckedChange = { enable ->
+                    if (enable) {
+                        if (OverlayController.canDraw(context)) {
+                            bubbleOn = OverlayController.start(context)
+                        } else {
+                            overlayLauncher.launch(OverlayController.permissionIntent(context))
+                        }
+                    } else {
+                        OverlayController.stop(context)
+                        bubbleOn = false
                     }
                 },
             )
