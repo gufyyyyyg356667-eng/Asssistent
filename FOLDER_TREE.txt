@@ -1,0 +1,70 @@
+app/src/main/
+├── AndroidManifest.xml
+├── java/com/hhh/phoneagent/
+│   ├── PhoneAgentApp.kt                      @HiltAndroidApp
+│   ├── core/
+│   │   ├── common/                           Result wrapper, Dispatchers qualifier, AppError
+│   │   ├── di/                               Hilt modules: Dispatchers, Network, Database, Audio
+│   │   ├── logging/                          AgentLogger (ring buffer + Logcat)
+│   │   └── config/                           BuildConfig-driven constants
+│   ├── domain/                               Pure Kotlin. No Android imports.
+│   │   ├── model/                            Message, Memory, AgentTurn, ToolCall, ToolResult,
+│   │   │                                     RiskLevel, ApprovalRequest, Workflow, WorkflowStep
+│   │   ├── repository/                       Interfaces: MemoryRepository, AgentRepository,
+│   │   │                                     SettingsRepository, WorkflowRepository, ScreenRepository
+│   │   ├── tool/                             AgentTool, ToolRegistry (contract), ToolSchema
+│   │   ├── security/                         ApprovalGate (contract), RiskPolicy
+│   │   └── usecase/                          RunAgentTurnUseCase, ExecuteToolUseCase,
+│   │                                         RunWorkflowUseCase, SaveMemoryUseCase
+│   ├── data/
+│   │   ├── local/db/                         AppDatabase, DAOs, Entities, Migrations
+│   │   ├── local/prefs/                      EncryptedKeyStore (Gemini keys), DataStore settings
+│   │   ├── remote/gemini/                    GeminiRestClient, GeminiLiveSocket,
+│   │   │                                     ApiKeyRotator (multi-key), GeminiDto
+│   │   ├── remote/interceptor/               KeyRotationInterceptor, RetryPolicyInterceptor
+│   │   ├── repository/                       Repository implementations
+│   │   └── workflow/                         JsonWorkflowParser, WorkflowFileStore
+│   ├── service/
+│   │   ├── accessibility/
+│   │   │   ├── AgentAccessibilityService.kt  THE single accessibility service
+│   │   │   ├── eyes/                         Eyes: UI hierarchy snapshot (from DeVA)
+│   │   │   ├── actions/                      Node click, text input, scroll, global actions
+│   │   │   └── gesture/                      GestureDispatcher: tap, swipe, long-press
+│   │   ├── wakeword/
+│   │   │   ├── WakeWordService.kt            Foreground service (microphone type)
+│   │   │   ├── WakeWordEngine.kt             TFLite inference loop
+│   │   │   └── AudioFocusCoordinator.kt      Mic handshake with SpeechCoordinator
+│   │   ├── overlay/
+│   │   │   ├── OverlayService.kt             Foreground service host
+│   │   │   ├── BubbleView.kt                 Draggable floating bubble
+│   │   │   └── ApprovalOverlay.kt            Blocking confirmation for HIGH_RISK actions
+│   │   └── boot/BootReceiver.kt
+│   ├── speech/
+│   │   ├── SpeechCoordinator.kt              Owns STT + TTS lifecycle and mic state
+│   │   ├── stt/                              SpeechRecognizer wrapper
+│   │   └── tts/                              TextToSpeech wrapper
+│   ├── tools/
+│   │   ├── registry/                         DefaultToolRegistry, ToolRegistryModule
+│   │   ├── screen/                           ReadScreenTool, FindNodeTool
+│   │   ├── ui/                               ClickTool, TypeTextTool, ScrollTool, GestureTool
+│   │   ├── apps/                             OpenAppTool, ListInstalledAppsTool
+│   │   ├── memory/                           RememberTool, RecallTool, ForgetTool
+│   │   ├── system/                           ToggleWifiTool, SetVolumeTool (HIGH_RISK)
+│   │   ├── communication/                    SendSmsTool, SendMessageTool (HIGH_RISK)
+│   │   ├── files/                            DeleteFileTool (HIGH_RISK)
+│   │   └── workflow/                         RunWorkflowTool
+│   └── presentation/
+│       ├── MainActivity.kt
+│       ├── navigation/                       NavGraph, Routes
+│       ├── theme/                            Color, Type, Theme
+│       ├── chat/                             ChatScreen, ChatViewModel
+│       ├── settings/                         SettingsScreen, SettingsViewModel
+│       ├── memory/                           MemoryScreen, MemoryViewModel
+│       ├── workflows/                        WorkflowListScreen, WorkflowEditorViewModel
+│       └── components/                       Shared composables
+├── res/
+│   ├── values/strings.xml, themes.xml
+│   └── xml/accessibility_service_config.xml, data_extraction_rules.xml
+└── assets/
+    ├── wakeword/                             hey_nova.tflite (আপনার মডেল)
+    └── workflows/                            Built-in JSON workflow templates

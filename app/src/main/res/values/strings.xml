@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Phone Agent</string>
+    <string name="accessibility_service_label">Phone Agent Accessibility</string>
+    <string name="accessibility_service_description">Lets the assistant read the screen and perform actions you approve.</string>
+</resources>
