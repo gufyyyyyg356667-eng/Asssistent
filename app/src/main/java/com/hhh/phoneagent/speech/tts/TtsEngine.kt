@@ -17,6 +17,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -60,6 +61,9 @@ class TtsEngine @Inject constructor(
                     waiters.remove(id)
                     tts.stop()
                 }
+                tts.setLanguage(if (spoken.any { it in '\u0980'..'\u09FF' }) Locale("bn", "BD") else Locale.US)
+                tts.setSpeechRate(0.95f)
+                tts.setPitch(1.05f)
                 if (tts.speak(spoken, TextToSpeech.QUEUE_FLUSH, null, id) == TextToSpeech.ERROR) {
                     waiters.remove(id)
                     cont.resume(failure(AppError.ErrorCode.UNKNOWN, "Could not queue speech"))

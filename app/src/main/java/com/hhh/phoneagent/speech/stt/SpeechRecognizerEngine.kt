@@ -25,12 +25,12 @@ class SpeechRecognizerEngine @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
 
-    suspend fun listenOnce(onPartial: (String) -> Unit = {}): AppResult<String> {
+    suspend fun listenOnce(timeoutMillis: Long = LISTEN_TIMEOUT_MS, onPartial: (String) -> Unit = {}): AppResult<String> {
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
             return failure(AppError.ErrorCode.SERVICE_UNAVAILABLE, "Speech recognition is not available on this device")
         }
         return withContext(Dispatchers.Main) {
-            withTimeoutOrNull(LISTEN_TIMEOUT_MS) { listenOnMainThread(onPartial) }
+            withTimeoutOrNull(timeoutMillis) { listenOnMainThread(onPartial) }
                 ?: failure(AppError.ErrorCode.INVALID_INPUT, "No speech was detected in time")
         }
     }
@@ -78,6 +78,8 @@ class SpeechRecognizerEngine @Inject constructor(
         .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
+        .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1_200L)
+        .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 900L)
 
     private fun errorFor(code: Int): AppResult.Failure = when (code) {
         SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT ->

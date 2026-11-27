@@ -11,7 +11,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import javax.inject.Singleton
 
-enum class MicOwner { NONE, WAKE_WORD, SPEECH_TURN }
+enum class MicOwner { NONE, WAKE_WORD, SPEECH_TURN, LIVE }
 
 /**
  * Single source of truth for who may use the microphone. The wake-word loop must close its
@@ -45,6 +45,8 @@ class MicArbiter @Inject constructor() {
     suspend fun claim(owner: MicOwner): Boolean = lock.withLock {
         val previous = ownerState.value
         if (previous == owner) return@withLock true
+        // Live voice holds the mic for the whole session. Other owners must wait for it to stop.
+        if (previous == MicOwner.LIVE) return@withLock false
         if (previous == MicOwner.WAKE_WORD && wakeHoldsHardware) {
             val released = withTimeoutOrNull(RELEASE_TIMEOUT_MS) { hardwareReleased.receive() } != null
             if (!released) {

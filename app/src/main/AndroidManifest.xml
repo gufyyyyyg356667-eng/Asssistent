@@ -98,5 +98,9 @@
             </intent-filter>
         </receiver>
 
+        <service
+            android:name=".service.live.LiveService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
     </application>
 </manifest>

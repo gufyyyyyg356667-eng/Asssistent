@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hhh.phoneagent.domain.model.VoiceState
+import com.hhh.phoneagent.speech.live.LiveState
 import com.hhh.phoneagent.presentation.settings.SettingsScreen
 import com.hhh.phoneagent.presentation.voice.VoiceViewModel
 import com.hhh.phoneagent.service.accessibility.AccessibilityBridge
@@ -79,15 +80,20 @@ private fun MainScreen(
     val connected by bridge.isConnected.collectAsState()
     val wakeEnabled by viewModel.wakeWordEnabled.collectAsState()
     val voiceState by viewModel.voiceState.collectAsState()
+    val liveState by viewModel.liveState.collectAsState()
+    val liveOn = liveState == LiveState.Connecting || liveState == LiveState.Connected
 
     var micGranted by remember { mutableStateOf(hasMicPermission(context)) }
     var pendingWakeEnable by remember { mutableStateOf(false) }
+    var pendingLiveEnable by remember { mutableStateOf(false) }
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { _ ->
         micGranted = hasMicPermission(context)
         if (micGranted && pendingWakeEnable) viewModel.setWakeWordEnabled(true)
+        if (micGranted && pendingLiveEnable) viewModel.setLiveEnabled(true)
         pendingWakeEnable = false
+        pendingLiveEnable = false
     }
 
     Column(
@@ -144,12 +150,39 @@ private fun MainScreen(
         }
         Spacer(Modifier.height(16.dp))
 
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Live voice (Gemini)")
+            Spacer(Modifier.height(0.dp))
+            Switch(
+                checked = liveOn,
+                onCheckedChange = { enable ->
+                    if (enable && !micGranted) {
+                        pendingLiveEnable = true
+                        permissionLauncher.launch(
+                            arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.POST_NOTIFICATIONS),
+                        )
+                    } else {
+                        viewModel.setLiveEnabled(enable)
+                    }
+                },
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+
         Button(onClick = onOpenGeminiKeys) { Text("Gemini keys") }
         Spacer(Modifier.height(16.dp))
         Button(onClick = viewModel::talkNow, enabled = micGranted) { Text("Talk") }
         Spacer(Modifier.height(16.dp))
         Text("Status: ${describe(voiceState)}")
+        Text("Live: ${describeLive(liveState)}")
     }
+}
+
+private fun describeLive(state: LiveState): String = when (state) {
+    LiveState.Off -> "Off"
+    LiveState.Connecting -> "Connecting"
+    LiveState.Connected -> "Connected"
+    is LiveState.Error -> "Error: ${state.message}"
 }
 
 private fun hasMicPermission(context: Context): Boolean =

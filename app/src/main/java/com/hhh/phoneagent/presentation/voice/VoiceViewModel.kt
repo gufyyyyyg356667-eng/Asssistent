@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.hhh.phoneagent.data.local.prefs.VoiceSettingsStore
 import com.hhh.phoneagent.domain.model.TurnSource
 import com.hhh.phoneagent.domain.model.VoiceState
+import com.hhh.phoneagent.service.live.LiveService
 import com.hhh.phoneagent.service.wakeword.WakeWordController
 import com.hhh.phoneagent.speech.SpeechCoordinator
+import com.hhh.phoneagent.speech.live.LiveController
+import com.hhh.phoneagent.speech.live.LiveState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +24,7 @@ class VoiceViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val settings: VoiceSettingsStore,
     private val coordinator: SpeechCoordinator,
+    private val live: LiveController,
 ) : ViewModel() {
 
     val wakeWordEnabled: StateFlow<Boolean> =
@@ -33,6 +37,12 @@ class VoiceViewModel @Inject constructor(
             settings.setWakeWordEnabled(enabled)
             if (enabled) WakeWordController.start(context) else WakeWordController.stop(context)
         }
+    }
+
+    val liveState: StateFlow<LiveState> = live.state
+
+    fun setLiveEnabled(enabled: Boolean) {
+        if (enabled) LiveService.start(context) else LiveService.stop(context)
     }
 
     fun talkNow() {

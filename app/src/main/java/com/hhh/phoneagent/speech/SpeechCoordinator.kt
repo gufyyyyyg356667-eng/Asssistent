@@ -18,8 +18,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Runs one voice turn: claim mic, listen, think, speak, release mic.
- * Only one turn runs at a time. Wake listening is paused for the entire turn.
+ * One conversation: listen, think, speak, then keep listening for a short follow-up.
+ * The mic stays with the turn for the whole conversation, so wake word stays paused.
  */
 @Singleton
 class SpeechCoordinator @Inject constructor(
@@ -53,12 +53,14 @@ class SpeechCoordinator @Inject constructor(
         }
         return try {
             stateFlow.value = VoiceState.Idle
-            Log.d(TAG, "Turn started from $source")
-            if (arbiter.claim(MicOwner.SPEECH_TURN)) {
-                runClaimedTurn()
+            Log.d(TAG, "Conversation started from $source")
+            val result = if (arbiter.claim(MicOwner.SPEECH_TURN)) {
+                runConversation()
             } else {
                 fail("Microphone is busy, please try again")
             }
+            if (result is AppResult.Success) stateFlow.value = VoiceState.Idle
+            result
         } finally {
             focus.abandon()
             arbiter.release(MicOwner.SPEECH_TURN)
@@ -66,33 +68,42 @@ class SpeechCoordinator @Inject constructor(
         }
     }
 
-    private suspend fun runClaimedTurn(): AppResult<Unit> {
+    private suspend fun runConversation(): AppResult<Unit> {
         focus.requestTransient()
-        stateFlow.value = VoiceState.Listening()
-        val transcript = when (val heard = recognizer.listenOnce { partial ->
-            stateFlow.value = VoiceState.Listening(partial)
-        }) {
-            is AppResult.Failure -> return fail(heard.error.message)
-            is AppResult.Success -> heard.value
-        }
-
-        stateFlow.value = VoiceState.Thinking
-        val reply = when (val answer = agent(transcript)) {
-            is AppResult.Failure -> {
-                tts.speak("Sorry, I could not complete that.")
-                return fail(answer.error.message)
+        var turns = 0
+        while (turns < MAX_TURNS) {
+            val timeout = if (turns == 0) FIRST_LISTEN_MS else FOLLOW_UP_LISTEN_MS
+            stateFlow.value = VoiceState.Listening()
+            val transcript = when (val heard = recognizer.listenOnce(timeout) { partial ->
+                stateFlow.value = VoiceState.Listening(partial)
+            }) {
+                is AppResult.Failure -> {
+                    // Silence after the first turn just means the user is done talking.
+                    if (turns > 0 && heard.error.code == AppError.ErrorCode.INVALID_INPUT) {
+                        return AppResult.Success(Unit)
+                    }
+                    return fail(heard.error.message)
+                }
+                is AppResult.Success -> heard.value
             }
-            is AppResult.Success -> answer.value
-        }
+            turns++
 
-        stateFlow.value = VoiceState.Speaking
-        return when (val spoken = tts.speak(reply)) {
-            is AppResult.Failure -> fail(spoken.error.message)
-            is AppResult.Success -> {
-                stateFlow.value = VoiceState.Idle
-                AppResult.Success(Unit)
+            stateFlow.value = VoiceState.Thinking
+            val reply = when (val answer = agent(transcript)) {
+                is AppResult.Failure -> {
+                    tts.speak("দুঃখিত, এখন কাজটি করতে পারছি না। একটু পরে আবার বলবেন।")
+                    return fail(answer.error.message)
+                }
+                is AppResult.Success -> answer.value
+            }
+
+            stateFlow.value = VoiceState.Speaking
+            when (val spoken = tts.speak(reply)) {
+                is AppResult.Failure -> return fail(spoken.error.message)
+                is AppResult.Success -> Unit
             }
         }
+        return AppResult.Success(Unit)
     }
 
     private fun fail(message: String): AppResult.Failure {
@@ -102,5 +113,8 @@ class SpeechCoordinator @Inject constructor(
 
     private companion object {
         const val TAG = "SpeechCoordinator"
+        const val FIRST_LISTEN_MS = 12_000L
+        const val FOLLOW_UP_LISTEN_MS = 6_000L
+        const val MAX_TURNS = 6
     }
 }
