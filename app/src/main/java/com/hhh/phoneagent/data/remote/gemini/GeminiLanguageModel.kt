@@ -24,6 +24,6 @@ class GeminiLanguageModel @Inject constructor(
 
     companion object {
         /** Change this here or move it to settings. Confirm the current model id before release. */
-        const val DEFAULT_MODEL = "gemini-2.5-flash"
+        const val DEFAULT_MODEL = "gemini-3.8-flash"
     }
 }
